@@ -1,0 +1,36 @@
+{
+  "name": "mm_https",
+  "version": "1.2.1",
+  "description": "这是超级美眉http请求帮助类模块，可自动补充cookie，实现模拟登录，通讯",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qiuwenwu/mm_https.git"
+  },
+  "keywords": [
+    "myhttp",
+    "async",
+    "await",
+    "promise",
+    "add",
+    "del",
+    "set",
+    "get",
+    "query",
+    "run",
+    "exec"
+  ],
+  "author": "邱文武",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/qiuwenwu/mm_https/issues"
+  },
+  "homepage": "https://github.com/qiuwenwu/mm_https#readme",
+  "dependencies": {
+    "mm_expand": "^1.2.2"
+  },
+  "devDependencies": {}
+}
