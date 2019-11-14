@@ -1,4 +1,4 @@
-var Http = require('./index.js').Http;
+var Http = require('./index.js');
 var fs = require("fs");
 
 /// 测试
