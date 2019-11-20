@@ -345,7 +345,6 @@ Http.prototype.post = function(url, param, headers, type, cookie) {
 	}
 	var op = this.option('POST', url, cookie);
 	op.body = body;
-	console.log(op.body);
 	op.headers['Content-Type'] = type;
 	$.push(op.headers, headers, true);
 	return this.run(op, body);
