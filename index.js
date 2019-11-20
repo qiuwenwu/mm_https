@@ -111,7 +111,7 @@ Http.prototype.option = function(method, url, cookie) {
 		port: port,
 		method: method,
 		headers: {
-			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;application/json-rpc',
 			'Accept-Encoding': 'gzip, deflate',
 			'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
 			'Cache-Control': 'max-age=0',
@@ -312,8 +312,7 @@ Http.prototype.post = function(url, param, headers, type, cookie) {
 	if (tp === "object") {
 		if (!type) {
 			type = 'application/json; charset=UTF-8';
-		}
-		else if (type.indexOf('json') !== -1) {
+		} else if (type.indexOf('json') !== -1) {
 			type = "application/json; charset=UTF-8";
 		} else if (type.indexOf('html') !== -1) {
 			type = "text/html; charset=UTF-8";
