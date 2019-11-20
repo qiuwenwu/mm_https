@@ -309,51 +309,44 @@ Http.prototype.get_fast = function(url) {
 Http.prototype.post = function(url, param, headers, type, cookie) {
 	var body = "";
 	var tp = typeof(param);
-	if (!type) {
-		type = 'application/json';
-	}
-	if (type) {
-		if (type.indexOf('json') !== -1) {
-			type = "application/json";
-		} else if (type.indexOf('html') !== -1) {
-			type = "text/html";
-		} else if (type.indexOf('form') !== -1) {
-			type = "application/x-www-form-urlencoded";
-		} else {
-			type = "text/plain";
+	if (tp === "object") {
+		if (!type) {
+			type = 'application/json; charset=UTF-8';
 		}
-		if (tp === "object") {
-			if (type.indexOf('/json') !== -1) {
-				body = $.toJson(param);
-			} else if (type.indexOf('form') !== -1) {
-				body = $.toUrl(param);
-			} else {
-				body = $.toXml(param);
-			}
+		else if (type.indexOf('json') !== -1) {
+			type = "application/json; charset=UTF-8";
+		} else if (type.indexOf('html') !== -1) {
+			type = "text/html; charset=UTF-8";
+		} else if (type.indexOf('form') !== -1) {
+			type = "application/x-www-form-urlencoded; charset=UTF-8";
 		} else {
-			body = param.trim();
+			type = "text/plain; charset=UTF-8";
+		}
+		if (type.indexOf('/json') !== -1) {
+			body = $.toJson(param);
+		} else if (type.indexOf('form') !== -1) {
+			body = $.toUrl(param);
+		} else {
+			body = $.toXml(param);
 		}
 	} else {
-		if (tp === "object") {
-			type = "application/json";
-			body = $.toJson(param);
-		} else if (type === "string") {
-			body = param.trim();
+		body = param.trim();
+		if (!type) {
 			if (body.startWith('{') && body.endWith('}')) {
-				type = "application/json";
+				type = "application/json; charset=UTF-8";
 			} else if (body.startWith('[') && body.endWith(']')) {
-				type = "application/json";
+				type = "application/json; charset=UTF-8";
 			} else if (body.indexOf("<html>") !== -1) {
 				type = "text/html";
 			} else {
-				type = "text/plain";
+				type = "text/plain; charset=UTF-8";
 			}
 		}
 	}
 	var op = this.option('POST', url, cookie);
 	op.body = body;
+	console.log(op.body);
 	op.headers['Content-Type'] = type;
-	op.headers['Content-Length'] = body.length;
 	$.push(op.headers, headers, true);
 	return this.run(op, body);
 };
@@ -369,10 +362,9 @@ Http.prototype.post_fast = function(url, body, type) {
 	var op = this.option('POST', url, {});
 	op.body = body;
 	if (!type) {
-		type = "application/json";
+		type = "application/json; charset=UTF-8";
 	}
 	op.headers['Content-Type'] = type;
-	op.headers['Content-Length'] = body.length;
 	return this.run_fast(op, body);
 };
 

@@ -122,15 +122,14 @@ Cookie.prototype.str = function(str) {
 			var o = lt[i];
 			var time = tromorrow;
 			if (o.Expires) {
-				var time = o.Expires.toTime();
+				time = o.Expires.toTime();
 			}
 			if (time > now) {
-				ar.push(o);
-			} else {
 				str += o.name + "=" + o.value + ";";
+				ar.push(o);
 			}
 		}
-		this.list.delList(ar);
+		this.list = ar;
 		return str;
 	}
 };
