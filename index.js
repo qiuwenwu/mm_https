@@ -111,15 +111,14 @@ Http.prototype.option = function(method, url, cookie) {
 		port: port,
 		method: method,
 		headers: {
-			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;application/json-rpc',
+			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
 			'Accept-Encoding': 'gzip, deflate',
 			'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
 			'Cache-Control': 'max-age=0',
 			'Connection': 'keep-alive',
 			'Upgrade-Insecure-Requests': '1',
 			'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
-			'X-Requested-With': 'XMLHttpRequest',
-			'Content-Type': 'text/html'
+			'X-Requested-With': 'XMLHttpRequest'
 		}
 	};
 	if (cookie) {
@@ -345,6 +344,7 @@ Http.prototype.post = function(url, param, headers, type, cookie) {
 	var op = this.option('POST', url, cookie);
 	op.body = body;
 	op.headers['Content-Type'] = type;
+	op.headers['Content-Length'] = Buffer.byteLength(body);
 	$.push(op.headers, headers, true);
 	return this.run(op, body);
 };
@@ -363,6 +363,7 @@ Http.prototype.post_fast = function(url, body, type) {
 		type = "application/json; charset=UTF-8";
 	}
 	op.headers['Content-Type'] = type;
+	op.headers['Content-Length'] = Buffer.byteLength(body);
 	return this.run_fast(op, body);
 };
 
