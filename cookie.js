@@ -118,7 +118,8 @@ Cookie.prototype.str = function(str) {
 		var now = new Date();
 		var tromorrow = new Date().addDays(1);
 		var ar = [];
-		for (var i = 0; i < lt.length; i++) {
+		const len = lt.length;
+		for (var i = 0; i < len; i++) {
 			var o = lt[i];
 			var time = tromorrow;
 			if (o.Expires) {
