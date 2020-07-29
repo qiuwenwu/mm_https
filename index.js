@@ -3,7 +3,7 @@
  * @author <a href="http://qww.elins.cn">邱文武</a>
  * @version 1.2
  */
-
+const fs = require("fs");
 const Cookie = require('./cookie');
 const {
 	gunzip,
@@ -34,7 +34,6 @@ function getInfo(url) {
 			port = 80;
 		}
 	}
-
 	return {
 		host: host,
 		port: port,
@@ -168,10 +167,9 @@ Http.prototype.req = function(options, param) {
 								reject(err);
 							} else {
 								var body = decoded.toString();
-								var mh = body.match(/charset=(gb2312|GBK)"/);
+								var mh = body.match(/charset=(gb2312|GBK)"/i);
 								if (mh) {
-									var encode = mh[0].replace('charset=', '').replace('"', '');
-									body = iconv.decode(decoded, encode);
+									body = iconv.decode(decoded, 'GBK');
 								}
 								resolve({
 									headers: res.headers,
@@ -186,10 +184,9 @@ Http.prototype.req = function(options, param) {
 								reject(err);
 							} else {
 								var body = decoded.toString();
-								var mh = body.match(/charset=(gb2312|GBK)"/);
+								var mh = body.match(/charset=(gb2312|GBK)"/i);
 								if (mh) {
-									var encode = mh[0].replace('charset=', '').replace('"', '');
-									body = iconv.decode(decoded, encode);
+									body = iconv.decode(decoded, 'GBK');
 								}
 								resolve({
 									headers: res.headers,
@@ -200,10 +197,9 @@ Http.prototype.req = function(options, param) {
 						});
 					} else {
 						var body = buffer.toString();
-						var mh = body.match(/charset=(gb2312|GBK)"/);
+						var mh = body.match(/charset=(gb2312|GBK)"/i);
 						if (mh) {
-							var encode = mh[0].replace('charset=', '').replace('"', '');
-							body = iconv.decode(buffer, encode);
+							body = iconv.decode(buffer, 'GBK');
 						}
 						resolve({
 							headers: res.headers,
@@ -297,10 +293,10 @@ Http.prototype.run_fast = async function(options, param) {
  * @param {Object} cookie 服务缓存
  * @return {Object} 请求的结果
  */
-Http.prototype.get = function(url, headers, cookie) {
+Http.prototype.get = async function(url, headers, cookie) {
 	var op = this.option('GET', url, cookie);
 	$.push(op.headers, headers, true);
-	return this.run(op);
+	return await this.run(op);
 };
 
 /**
@@ -308,9 +304,9 @@ Http.prototype.get = function(url, headers, cookie) {
  * @param {String} url 请求地址
  * @return {Object} 请求的结果
  */
-Http.prototype.get_fast = function(url) {
+Http.prototype.get_fast = async function(url) {
 	var op = this.option('GET', url, {});
-	return this.run_fast(op);
+	return await this.run_fast(op);
 };
 
 /**
@@ -322,7 +318,7 @@ Http.prototype.get_fast = function(url) {
  * @param {String} cookie Cookie缓存
  * @return {Object} 请求的结果
  */
-Http.prototype.post = function(url, param, headers, type, cookie) {
+Http.prototype.post = async function(url, param, headers, type, cookie) {
 	var body = "";
 	var tp = typeof(param);
 	if (tp === "object") {
@@ -363,7 +359,7 @@ Http.prototype.post = function(url, param, headers, type, cookie) {
 	op.headers['Content-Type'] = type;
 	op.headers['Content-Length'] = Buffer.byteLength(body);
 	$.push(op.headers, headers, true);
-	return this.run(op, body);
+	return await this.run(op, body);
 };
 
 /**
@@ -373,7 +369,7 @@ Http.prototype.post = function(url, param, headers, type, cookie) {
  * @param {String} type 请求类型
  * @return {Object} 请求的结果
  */
-Http.prototype.post_fast = function(url, body, type) {
+Http.prototype.post_fast = async function(url, body, type) {
 	var op = this.option('POST', url, {});
 	op.body = body;
 	if (!type) {
@@ -381,7 +377,50 @@ Http.prototype.post_fast = function(url, body, type) {
 	}
 	op.headers['Content-Type'] = type;
 	op.headers['Content-Length'] = Buffer.byteLength(body);
-	return this.run_fast(op, body);
+	return await this.run_fast(op, body);
+};
+
+/**
+ * @description 下载
+ * @param {String} url 下载地址
+ * @param {String} filename 下载地址
+ * @param {String} auto 自动类型
+ * @param {Object} headers 协议头
+ * @param {Object} cookie COOKIE
+ * @return {String} 成功返回保存路径，失败返回null
+ */
+Http.prototype.download = async function(url, filename, auto, headers, cookie) {
+	this.encoding = "binary";
+	var res = await this.get(url, headers, cookie);
+	var file = null;
+	if (res.binary) {
+		if (auto) {
+			var arr = url.split('/');
+			var fullname = arr[arr.length - 1];
+			if (fullname.indexOf('.') !== -1) {
+				var type = fullname.right('.');
+				if (type) {
+					file = filename + "." + type;
+				}
+			} else {
+				var content_type = res.headers["content-type"];
+				var type = content_type.replace("image/", "").replace("application/x-", "").replace("text/", "").replace("audio/",
+					"").replace("audio/", "").replace("jpeg", "jpg");
+				file = filename + "." + type;
+			}
+		} else {
+			file = filename;
+		}
+		if (file) {
+			var length = await fs.writeFileSync(file, res.binary, "binary");
+			if (length == 0) {
+				file = null;
+			}
+		} else {
+			console.log('保存文件名(filename)不能为!');
+		}
+	}
+	return file;
 };
 
 /**

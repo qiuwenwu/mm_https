@@ -91,10 +91,22 @@ var fs = require("fs");
 // }
 
 
-async function test () {
+// async function test () {
+// 	var hp = new Http();
+// 	// var url = "http://vip.stock.finance.sina.com.cn/corp/view/vRPD_NewStockIssue.php?page=1&cngem=0&orderBy=NetDate&orderType=desc";
+// 	var url = "http://www.sccnn.com/gaojingtuku/jierisucai/jianjunjie/20200724-264416.html";
+// 	var res = await hp.get(url);
+// 	console.log(res);
+// }
+// test();
+
+
+async function download(){
 	var hp = new Http();
-	var url = "http://vip.stock.finance.sina.com.cn/corp/view/vRPD_NewStockIssue.php?page=1&cngem=0&orderBy=NetDate&orderType=desc";
-	var res = await hp.get(url);
-	console.log(res);
+	var url = "https://pic.90tu.com/d/file/update/202005/26/b0lxtps0cpi08.jpg";
+	"./美女/中文".addDir();
+	var file = await hp.download(url, "./美女/中文", true, null, null);
+	console.log(file);
 }
-test();
+
+ download();
