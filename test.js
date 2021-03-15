@@ -101,12 +101,19 @@ var fs = require("fs");
 // test();
 
 
-async function download(){
+// async function download(){
+// 	var hp = new Http();
+// 	var url = "https://pic.90tu.com/d/file/update/202005/26/b0lxtps0cpi08.jpg";
+// 	"./美女/中文".addDir();
+// 	var file = await hp.download(url, "./美女/中文", true, null, null);
+// 	console.log(file);
+// }
+
+async function test(){
 	var hp = new Http();
-	var url = "https://pic.90tu.com/d/file/update/202005/26/b0lxtps0cpi08.jpg";
-	"./美女/中文".addDir();
-	var file = await hp.download(url, "./美女/中文", true, null, null);
-	console.log(file);
+	var url = "https://weibo.com/p/1003061669879400";
+	var res = await hp.get(url);
+	console.log(res);
 }
 
- download();
+ test();

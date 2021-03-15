@@ -46,10 +46,11 @@ function getInfo(url) {
  */
 class Http {
 	/**
-	 * @description 构造函数
+	 * 构造函数
 	 * @constructor
+	 * @param {Object} config 配置参数
 	 */
-	constructor() {
+	constructor(config) {
 		/**
 		 * 存储上次请求
 		 */
@@ -63,6 +64,20 @@ class Http {
 		 * 获取的编码方式
 		 */
 		this.encoding = 'utf-8';
+
+		this.config = Object.assign({
+			headers: {
+				'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+				'Accept-Encoding': 'gzip, deflate',
+				'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+				'Cache-Control': 'max-age=0',
+				'Connection': 'keep-alive',
+				'Upgrade-Insecure-Requests': '1',
+				'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+				'X-Requested-With': 'XMLHttpRequest'
+			},
+			rejectUnauthorized: false
+		}, config)
 	}
 }
 
@@ -104,23 +119,13 @@ Http.prototype.option = function(method, url, cookie) {
 		port,
 		path
 	} = getInfo(url);
-	var op = {
+	var op = Object.assign({}, this.config, {
 		url: url,
 		hostname: host,
 		path: path,
 		port: port,
-		method: method,
-		headers: {
-			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-			'Accept-Encoding': 'gzip, deflate',
-			'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-			'Cache-Control': 'max-age=0',
-			'Connection': 'keep-alive',
-			'Upgrade-Insecure-Requests': '1',
-			'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
-			'X-Requested-With': 'XMLHttpRequest'
-		}
-	};
+		method: method
+	});
 	if (cookie) {
 		op.cookie = cookie;
 	} else if (this.cookie) {
