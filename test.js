@@ -101,19 +101,22 @@ var fs = require("fs");
 // test();
 
 
-// async function download(){
+async function download(){
+	var hp = new Http();
+	// var url = "http://www.haoduoma.com/d/file/p/2021-06-18/76df67e451ca9dec9991588ad7fda6e6.jpg";
+	var url = "https://www.copipi.com/p/224/224/becce1fc21d723614b598f5377d5d676.jpg";
+	"./二维码/中文".addDir();
+	var filename = "./二维码/你好.jpg".fullname();
+	var file = await hp.download(url, filename);
+	console.log(file);
+}
+download();
+
+// async function test(){
 // 	var hp = new Http();
-// 	var url = "https://pic.90tu.com/d/file/update/202005/26/b0lxtps0cpi08.jpg";
-// 	"./美女/中文".addDir();
-// 	var file = await hp.download(url, "./美女/中文", true, null, null);
-// 	console.log(file);
+// 	var url = "https://weibo.com/p/1003061669879400";
+// 	var res = await hp.get(url);
+// 	console.log(res);
 // }
 
-async function test(){
-	var hp = new Http();
-	var url = "https://weibo.com/p/1003061669879400";
-	var res = await hp.get(url);
-	console.log(res);
-}
-
- test();
+ // test();
