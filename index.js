@@ -3,75 +3,36 @@
  * @author <a href="http://qww.elins.cn">邱文武</a>
  * @version 1.2
  */
+const http = require('http');
+const https = require('https');
+const HttpProxyAgent = require('https-proxy-agent');
 const fs = require("fs");
 const Cookie = require('./cookie');
 const {
-	gunzip,
-	inflate
+	unzipSync
 } = require('zlib');
-const http = require('http');
-const https = require('https');
 const iconv = require('iconv-lite');
+const {
+	hostname
+} = require('os');
+const {
+	header
+} = require('request/lib/hawk');
+const {
+	HttpsProxyAgent
+} = require('https-proxy-agent');
 
-/**
- * @description 获取参数项
- * @param {String} url 网址
- * @return {Object} http参数对象
- */
-function getInfo(url) {
-	var host = url.between("//", "/", true);
-	var path = "/" + url.replace("//").right("/");
-	var index = host.indexOf(':');
-	var port;
-
-	if (index !== -1) {
-		port = host.substr(index + 1);
-		host = host.substr(0, index);
-	} else {
-		if (url.indexOf('https') !== -1) {
-			port = 443;
-		} else {
-			port = 80;
-		}
-	}
-	return {
-		host: host,
-		port: port,
-		path: path
-	}
-}
-
-/**
- * http类函数
- */
 class Http {
-	/**
-	 * 构造函数
-	 * @constructor
-	 * @param {Object} config 配置参数
-	 */
 	constructor(config) {
-		/**
-		 * 存储上次请求
-		 */
-		this.referer = "";
-		/**
-		 * 设置cookie存储
-		 */
-		this.cookie = new Cookie();
-
-		/**
-		 * 获取的编码方式
-		 */
-		this.encoding = 'utf-8';
-
 		this.config = Object.assign({
 			headers: {
-				'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-				'accept-encoding': 'gzip, deflate',
+				'accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+				// 'accept-encoding': 'gzip, deflate, br',
+				'accept-encoding': 'deflate',
 				'accept-language': 'zh-CN,zh;q=0.9',
-				'cache-control': 'max-age=0',
-				'sec-ch-ua': '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+				'cache-control': 'no-cache',
+				'pragma': 'no-cache',
+				'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
 				'sec-ch-ua-mobile': '?0',
 				'sec-ch-ua-platform': '"Windows"',
 				'sec-fetch-dest': 'document',
@@ -79,258 +40,97 @@ class Http {
 				'sec-fetch-site': 'none',
 				'sec-fetch-user': '?1',
 				'upgrade-insecure-requests': '1',
-				'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36'
+				'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
 			},
-			rejectUnauthorized: false
-		}, config)
+			rejectUnauthorized: false,
+			cookie: "",
+			proxy: null
+			// proxy: "http://127.0.0.1:10809"
+		}, config);
+
+		/**
+		 * cookie缓存
+		 */
+		this.cookies = {
+
+		}
 	}
 }
 
-/**
- * @description 删除cookie
- * @param {String} name 名称
- * @param {String} path 路径
- * @param {String} domain 域名
- */
-Http.prototype.delCookie = function(name, path, domain) {
-	if (domain) {
-		this.list.del({
-			name: name,
-			path: path,
-			domain: domain
-		});
-	} else if (path) {
-		this.list.del({
-			name: name,
-			path: path
-		});
-	} else {
-		this.list.del({
-			name: name
-		});
+Http.prototype.set_cookie = function(cookieStr) {
+	var arr = cookieStr.split('; ');
+	var name;
+	if (arr.length > 1) {
+		var kv = arr[0];
+		var arr_kv = kv.split("=");
+		name = arr_kv[0];
+		this.cookies[name] = encodeURIComponent(arr_kv[1]);
 	}
-};
+}
 
-/**
- * @description 初始化选项
- * @param {String} method 请求方式
- * @param {String} url 请求地址
- * @param {Object} cookie 缓存
- * @return {Object} 配置参数
- */
-Http.prototype.option = function(method, url, cookie) {
+Http.prototype.get_cookie = function() {
+	var dist = this.cookies;
+	var str = "";
+	for(var k in dist)
+	{
+		str += "; " + k + "=" + dist[k];
+	}
+	return str;
+}
+
+Http.prototype.options = function(options) {
+	return {
+		url: "",
+		method: "GET",
+		body: {},
+		proxy: "http://127.0.0.1:10809",
+		headers: Object.assign({}, this.config.headers)
+	}
+}
+
+Http.prototype.http_options = function(options) {
+	var cg = this.config;
 	var {
-		host,
-		port,
-		path
-	} = getInfo(url);
-	var op = Object.assign({}, this.config, {
-		url: url,
-		hostname: host,
-		path: path,
-		port: port,
-		method: method
-	});
-	if (cookie) {
-		op.cookie = cookie;
-	} else if (this.cookie) {
-		op.cookie = this.cookie.str();
+		url,
+		body,
+		headers,
+		method,
+		cookie,
+		type
+	} = options;
+	var protocol = url.left(":/") || 'http';
+	// 移除协议头 取端口号
+	var u = url.replace(protocol + "://", "");
+	var port = u.between(":", "/") || u.right(":") || (protocol === 'http' ? 80 : 443);
+	// 移除端口号，取主机地址
+	u = u.replace(":" + port, "");
+	var hostname = u.left("/", true).left("?", true);
+	// 移除主机地址，取路由路径
+	u = u.replace(hostname, "");
+	var path = u;
+	if(cookie){
+		this.set_cookie(cookie);
 	}
-	if (this.referer) {
-		op.Referer = this.referer;
+	return {
+		url,
+		protocol,
+		hostname,
+		body,
+		type,
+		port: Number(port),
+		path: path.indexOf("/") === 0 ? path : "/" + path,
+		method: method || "GET",
+		headers: headers ? Object.assign({}, cg.headers, headers) : Object.assign({}, cg.headers),
+		agent: cg.proxy ? new HttpProxyAgent(cg.proxy) : null,
+		cookie: this.get_cookie()
 	}
-	return op;
-};
+}
 
-/**
- * http请求
- * @param {Object} options 请求配置
- * @param {Object} param 请求参数
- * @return {Promise|Object} 请求的结果
- */
-Http.prototype.req = function(options, param) {
-	return new Promise((resolve, reject) => {
-		var hp;
-		var url = options.url;
-		if (url && url.indexOf('https') !== -1) {
-			hp = https;
-		} else {
-			hp = http;
-		}
-		var req = hp.request(options, function(res) {
-			var code = res.statusCode;
-			if (code === 200) {
-				var chunks = [];
-				var encoding = res.headers['content-encoding'];
-				// 非gzip/deflate要转成utf-8格式
-				if (encoding === 'undefined') {
-					res.setEncoding(this.encoding);
-				}
-				res.on('data', function(chunk) {
-					chunks.push(chunk);
-				});
-				res.on('end', function() {
-					var buffer = Buffer.concat(chunks);
-					if (encoding === 'gzip') {
-						gunzip(buffer, function(err, decoded) {
-							if (err) {
-								reject(err);
-							} else {
-								var body = decoded.toString();
-								var mh = body.match(/charset=(gb2312|GBK)"/i);
-								if (mh) {
-									body = iconv.decode(decoded, 'GBK');
-								}
-								resolve({
-									headers: res.headers,
-									binary: decoded,
-									body: body
-								});
-							}
-						});
-					} else if (encoding === 'deflate') {
-						inflate(buffer, function(err, decoded) {
-							if (err) {
-								reject(err);
-							} else {
-								var body = decoded.toString();
-								var mh = body.match(/charset=(gb2312|GBK)"/i);
-								if (mh) {
-									body = iconv.decode(decoded, 'GBK');
-								}
-								resolve({
-									headers: res.headers,
-									binary: decoded,
-									body: body
-								});
-							}
-						});
-					} else {
-						var body = buffer.toString();
-						var mh = body.match(/charset=(gb2312|GBK)"/i);
-						if (mh) {
-							body = iconv.decode(buffer, 'GBK');
-						}
-						resolve({
-							headers: res.headers,
-							binary: buffer,
-							body: body
-						});
-					}
-				});
-			} else {
-				resolve({
-					status: code,
-					message: res.statusMessage,
-					headers: res.headers
-				});
-			}
-		});
-		if (param) {
-			req.write(param);
-		}
-		req.on("error", function(err) {
-			resolve({
-				status: 0,
-				message: err.message
-			});
-		});
-		req.end();
-	});
-};
-
-/**
- * @description 执行http请求
- * @param {Object} options 配置参数
- * @param {Object} param 传递参数
- * @return {Object} 执行结果
- */
-Http.prototype.run = async function(options, param) {
-	var res = await this.req(options, param);
-	if (res) {
-		if (res.status === 302) {
-			var url = res.headers.location;
-			var op = this.option(options.method, url);
-			res = await this.req(op, param);
-			if (res.status === 302) {
-				var url = res.headers.location;
-				op = this.option(options.method, url);
-				res = await this.req(op, param);
-			}
-		}
-		var hd = res.headers;
-		if (hd) {
-			var lt = hd['set-cookie'];
-			if (lt) {
-				var len = lt.length;
-				for (var i = 0; i < len; i++) {
-					this.cookie.str(lt[i]);
-				}
-			}
-			this.referer = options.url;
-		}
-	}
-	return res;
-};
-
-/**
- * @description 执行http请求 —— 快速
- * @param {Object} options 配置参数
- * @param {Object} param 传递参数
- * @return {Object} 执行结果
- */
-Http.prototype.run_fast = async function(options, param) {
-	var res = await this.req(options, param);
-	if (res) {
-		if (res.status === 302) {
-			var url = res.headers.location;
-			var op = this.option(options.method, url);
-			res = await this.req(op, param);
-			if (res.status === 302) {
-				var url = res.headers.location;
-				op = this.option(options.method, url);
-				res = await this.req(op, param);
-			}
-		}
-	}
-	return res;
-};
-
-/**
- * @description GET请求
- * @param {String} url 请求地址
- * @param {Object} headers 请求头
- * @param {Object} cookie 服务缓存
- * @return {Object} 请求的结果
- */
-Http.prototype.get = async function(url, headers, cookie) {
-	var op = this.option('GET', url, cookie);
-	$.push(op.headers, headers, true);
-	return await this.run(op);
-};
-
-/**
- * @description GET请求 —— 快速
- * @param {String} url 请求地址
- * @return {Object} 请求的结果
- */
-Http.prototype.get_fast = async function(url) {
-	var op = this.option('GET', url, {});
-	return await this.run_fast(op);
-};
-
-/**
- * @description POST请求
- * @param {String} url 请求地址
- * @param {Object} param 正文参数
- * @param {Object} headers 请求头
- * @param {String} type 请求类型
- * @param {String} cookie Cookie缓存
- * @return {Object} 请求的结果
- */
-Http.prototype.post = async function(url, param, headers, type, cookie) {
+Http.prototype.post_option = function(op) {
+	var param = op.body;
 	var body = "";
 	var tp = typeof(param);
+	var type = op.type;
 	if (tp === "object") {
 		if (!type) {
 			type = 'application/json; charset=UTF-8';
@@ -364,30 +164,150 @@ Http.prototype.post = async function(url, param, headers, type, cookie) {
 			}
 		}
 	}
-	var op = this.option('POST', url, cookie);
 	op.body = body;
 	op.headers['Content-Type'] = type;
 	op.headers['Content-Length'] = Buffer.byteLength(body);
-	$.push(op.headers, headers, true);
-	return await this.run(op, body);
-};
+}
 
 /**
- * @description POST请求 —— 快速
- * @param {String} url 请求地址
- * @param {String} body 正文参数
- * @param {String} type 请求类型
- * @return {Object} 请求的结果
+ * http请求
+ * @param {Object} options 配置
+ * @return {Object} 返回执行结果
  */
-Http.prototype.post_fast = async function(url, body, type) {
-	var op = this.option('POST', url, {});
-	op.body = body;
-	if (!type) {
-		type = "application/json; charset=UTF-8";
+Http.prototype.req = async function(options) {
+	var op = this.http_options(options);
+	if (op.method.toLocaleUpperCase() === "POST") {
+		this.post_option(op);
 	}
-	op.headers['Content-Type'] = type;
-	op.headers['Content-Length'] = Buffer.byteLength(body);
-	return await this.run_fast(op, body);
+	var res = await this.request(op);
+	if (res.statusCode == 302) {
+		var url = headers.location;
+		var lt = headers['set-cookie'];
+		if (lt) {
+			var len = lt.length;
+			for (var i = 0; i < len; i++) {
+				_this.set_cookie(lt[i]);
+			}
+			options.url = url;
+			op = this.http_options(options);
+			op.referer = options.url;
+			res = await this.request(op);
+		}
+	} else {
+		return res;
+	}
+}
+
+/**
+ * 请求
+ * @param {Object} options 配置
+ */
+Http.prototype.request = function(options) {
+	var hp = options.protocol === "https" ? https : http;
+	delete options.protocol;
+	var _this = this;
+	return new Promise(function(resolve, reject) {
+		var body = '';
+		var req = hp.request(options, (res) => {
+			if (res.statusCode == 200) {
+				var { headers } = res;
+				var buffer = '';
+				var encoding = headers['content-encoding'];
+				if (encoding) {
+					res.setEncoding('utf-8');
+				} else {
+					res.setEncoding("binary");
+				}
+				res.on('data', function(d) {
+					buffer += d;
+				}).on('end', function(d) {
+					switch (encoding) {
+						case 'br':
+						case 'gzip':
+						case 'deflate':
+							body = unzipSync(buffer);
+							break;
+						default:
+							body = buffer;
+							break;
+					}
+					var mh = body.match(/charset=(gb2312|GBK)"/i);
+					if (mh) {
+						body = iconv.decode(buffer, 'GBK');
+					}
+					var lt = headers['set-cookie'];
+					if (lt) {
+						var len = lt.length;
+						for (var i = 0; i < len; i++) {
+							_this.set_cookie(lt[i]);
+						}
+					}
+					resolve({
+						status: 200,
+						headers,
+						body: body
+					});
+				});
+			} else {
+				resolve({
+					status: {
+						code: res.statusCode,
+						message: res.statusMessage
+					}
+				});
+				reject(res);
+			}
+		});
+
+		req.on("error", function(err) {
+			resolve({
+				status: 0,
+				message: err.message
+			});
+			reject(err);
+		});
+		if (options.method.toLocaleUpperCase() == "POST") {
+			req.write(options.body);
+		}
+		req.end();
+	});
+}
+
+/**
+ * @description GET请求
+ * @param {String} url 请求地址
+ * @param {Object} headers 请求头
+ * @param {Object} cookie 服务缓存
+ * @return {Object} 响应的结果
+ */
+Http.prototype.get = async function(url, headers, cookie) {
+	return await this.req({
+		method: "GET",
+		url,
+		headers,
+		cookie
+	});
+};
+
+
+/**
+ * @description POST提交
+ * @param {String} url 请求地址
+ * @param {Object} body 提交参
+ * @param {Object} headers 请求头
+ * @param {Number} type 传参方式 json, form, text
+ * @param {Object} cookie 服务缓存
+ * @return {Object} 响应的结果
+ */
+Http.prototype.post = async function(url, body, headers, type, cookie) {
+	return await this.req({
+		method: "POST",
+		url,
+		body,
+		type,
+		headers,
+		cookie
+	});
 };
 
 /**
@@ -400,10 +320,9 @@ Http.prototype.post_fast = async function(url, body, type) {
  * @return {String} 成功返回保存路径，失败返回null
  */
 Http.prototype.download = async function(url, filename, auto, headers, cookie) {
-	this.encoding = "binary";
 	var res = await this.get(url, headers, cookie);
 	var file = null;
-	if (res.binary) {
+	if (res.body) {
 		if (auto) {
 			var arr = url.split('/');
 			var fullname = arr[arr.length - 1];
@@ -414,15 +333,16 @@ Http.prototype.download = async function(url, filename, auto, headers, cookie) {
 				}
 			} else {
 				var content_type = res.headers["content-type"];
-				var type = content_type.replace("image/", "").replace("application/x-", "").replace("text/", "").replace("audio/",
-					"").replace("audio/", "").replace("jpeg", "jpg");
+				var type = content_type.replace("image/", "").replace("application/x-", "").replace("text/", "")
+					.replace("audio/",
+						"").replace("audio/", "").replace("jpeg", "jpg");
 				file = filename + "." + type;
 			}
 		} else {
 			file = filename;
 		}
 		if (file) {
-			var length = await fs.writeFileSync(file, res.binary, "binary");
+			var length = await fs.writeFileSync(file, res.body, "binary");
 			if (length == 0) {
 				file = null;
 			}
@@ -437,8 +357,7 @@ Http.prototype.download = async function(url, filename, auto, headers, cookie) {
  * 清除缓存
  */
 Http.prototype.clear = function() {
-	this.cookie.list.clear();
-	this.headers = [];
+	this.cookies = {};
 };
 
 if (global.$) {
