@@ -1,4 +1,5 @@
 // const nJwt = require('njwt');
+var http = require('http');
 var Http = require('./index.js');
 var fs = require("fs");
 
@@ -68,7 +69,7 @@ var fs = require("fs");
 // 	// res = await hp.get("http://api.bitcentre.com.cn/paper/id?id=1", {
 // 	// 	"x-auth-token": token
 // 	// });
-	
+
 // 	// res = await hp.get("https://www.google.com");
 // 	console.log('结果:', res);
 // 	console.log('结果:', hp.cookies);
@@ -93,11 +94,13 @@ var fs = require("fs");
 // 	// console.log('结果:', hp.cookies);
 // }
 
-// async function test () {
-// 	var hp = new Http();
-// 	var res = await hp.get_fast('http://www.hao123.com');
-// 	console.log(res.body);
-// }
+async function test() {
+	var hp = new Http();
+	hp.config.headers.Accept = "application/javascript; charset=UTF-8";
+	var url =
+		"http://69.push2.eastmoney.com/api/qt/clist/get?cb=jQuery1124007023275733383882_1586573202818&pn=1&pz=100000&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:1+t:23&fields=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f22,f11,f62,f128,f136,f115,f152";
+	var res = await hp.get(url);
+}
 
 // async function test() {
 // 	var hp = new Http();
@@ -155,17 +158,17 @@ var fs = require("fs");
 // 		url: "http://www.hao123.com/test?dd=123"
 // 	});
 // 	console.log(4, options);
-	
+
 // 	var options = http.new_options({
 // 		url: "http://www.hao123.com"
 // 	});
 // 	console.log(5, options);
-	
+
 // 	options = http.new_options({
 // 		url: "https://www.hao123.com:8000"
 // 	});
 // 	console.log(6, options);
-	
+
 // 	options = http.new_options({
 // 		url: "https://www.hao123.com?dd=123"
 // 	});
@@ -178,7 +181,7 @@ var fs = require("fs");
 // 	console.log("结果", res.body);
 // 	var res = await http.download('http://www.51sjk.com/Upload/Articles/1/0/8/8799_20200415005654483_0.jpg', "./demo.jpg");
 // 	// console.log(res);
-	
+
 // 	// console.log("代理请求");
 // 	// var http = new Http({
 // 	// 	proxy: "http://127.0.0.1:10809"
@@ -187,4 +190,4 @@ var fs = require("fs");
 // 	// console.log("结果", res.body);
 // }
 
-// test();
+test();

@@ -5,6 +5,7 @@
  */
 const http = require('http');
 const https = require('https');
+const Url = require('url');
 const HttpProxyAgent = require('https-proxy-agent');
 const fs = require("fs");
 const Cookie = require('./cookie');
@@ -16,9 +17,6 @@ const {
 	hostname
 } = require('os');
 const {
-	header
-} = require('request/lib/hawk');
-const {
 	HttpsProxyAgent
 } = require('https-proxy-agent');
 
@@ -26,21 +24,22 @@ class Http {
 	constructor(config) {
 		this.config = Object.assign({
 			headers: {
-				'accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+				'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 				// 'accept-encoding': 'gzip, deflate, br',
-				'accept-encoding': 'deflate',
-				'accept-language': 'zh-CN,zh;q=0.9',
-				'cache-control': 'no-cache',
-				'pragma': 'no-cache',
-				'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
-				'sec-ch-ua-mobile': '?0',
-				'sec-ch-ua-platform': '"Windows"',
-				'sec-fetch-dest': 'document',
-				'sec-fetch-mode': 'navigate',
-				'sec-fetch-site': 'none',
-				'sec-fetch-user': '?1',
-				'upgrade-insecure-requests': '1',
-				'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
+				'Accept-Encoding': 'gzip, deflate',
+				'Accept-Language': 'zh-CN,zh;q=0.9',
+				'Cache-Control': 'no-cache',
+				'Connection': 'keep-alive',
+				'Pragma': 'no-cache',
+				// 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+				// 'sec-ch-ua-mobile': '?0',
+				// 'sec-ch-ua-platform': '"Windows"',
+				// 'sec-fetch-dest': 'document',
+				// 'sec-fetch-mode': 'navigate',
+				// 'sec-fetch-site': 'none',
+				// 'sec-fetch-user': '?1',
+				'Upgrade-Insecure-Requests': '1',
+				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
 			},
 			rejectUnauthorized: false,
 			cookie: "",
@@ -61,26 +60,28 @@ Http.prototype.set_cookie = function(cookieStr) {
 	var arr = cookieStr.split('; ');
 	var name;
 	if (arr.length > 1) {
-		var kv = arr[0];
-		var arr_kv = kv.split("=");
-		name = arr_kv[0];
-		this.cookies[name] = encodeURIComponent(arr_kv[1]);
+		for (var i = 0; i < arr.length; i++) {
+			var kv = arr[i];
+			var arr_kv = kv.split("=");
+			name = arr_kv[0];
+			this.cookies[name] = encodeURIComponent(arr_kv[1]);
+		}
 	}
 }
 
 Http.prototype.get_cookie = function() {
 	var dist = this.cookies;
 	var str = "";
-	for(var k in dist)
-	{
+	for (var k in dist) {
 		str += "; " + k + "=" + dist[k];
 	}
-	return str;
+	var cookie = str.replace("; ", "");
+	return cookie
 }
 
 Http.prototype.options = function(options) {
 	return {
-		url: "",
+		href: "",
 		method: "GET",
 		body: {},
 		proxy: "http://127.0.0.1:10809",
@@ -91,40 +92,66 @@ Http.prototype.options = function(options) {
 Http.prototype.http_options = function(options) {
 	var cg = this.config;
 	var {
-		url,
+		href,
 		body,
 		headers,
 		method,
 		cookie,
 		type
 	} = options;
-	var protocol = url.left(":/") || 'http';
-	// 移除协议头 取端口号
-	var u = url.replace(protocol + "://", "");
-	var port = u.between(":", "/") || u.right(":") || (protocol === 'http' ? 80 : 443);
-	// 移除端口号，取主机地址
-	u = u.replace(":" + port, "");
-	var hostname = u.left("/", true).left("?", true);
-	// 移除主机地址，取路由路径
-	u = u.replace(hostname, "");
-	var path = u;
-	if(cookie){
+	var u = Url.parse(href, true);
+	if (cookie) {
 		this.set_cookie(cookie);
 	}
-	return {
-		url,
-		protocol,
-		hostname,
+	return Object.assign({}, {
 		body,
 		type,
-		port: Number(port),
-		path: path.indexOf("/") === 0 ? path : "/" + path,
 		method: method || "GET",
 		headers: headers ? Object.assign({}, cg.headers, headers) : Object.assign({}, cg.headers),
 		agent: cg.proxy ? new HttpProxyAgent(cg.proxy) : null,
 		cookie: this.get_cookie()
-	}
+	}, u);
 }
+
+// Http.prototype.http_options = function(options) {
+// 	var cg = this.config;
+// 	var {
+// 		href,
+// 		body,
+// 		headers,
+// 		method,
+// 		cookie,
+// 		type
+// 	} = options;
+// 	var protocol = href.left(":/") || 'http';
+// 	// 移除协议头 取端口号
+// 	var u = href.replace(protocol + "://", "");
+// 	var port = u.between(":", "/") || u.left("/", true).right(":") || (protocol === 'http' ? 80 : 443);
+
+// 	// 移除端口号，取主机地址
+// 	u = u.replace(":" + port, "");
+// 	var hostname = u.left("/", true).left("?", true);
+// 	// 移除主机地址，取路由路径
+// 	u = u.replace(hostname, "");
+// 	var path = u.left("?", true);
+// 	if (cookie) {
+// 		this.set_cookie(cookie);
+// 	}
+// 	return {
+// 		href,
+// 		protocol,
+// 		hostname,
+// 		body,
+// 		type,
+// 		port: Number(port),
+// 		search: "?" + u.right("?"),
+// 		path: path.indexOf("/") === 0 ? path : "/" + path,
+// 		method: method || "GET",
+// 		headers: headers ? Object.assign({}, cg.headers, headers) : Object.assign({}, cg.headers),
+// 		agent: cg.proxy ? new HttpProxyAgent(cg.proxy) : null,
+// 		cookie: this.get_cookie()
+// 	}
+// }
 
 Http.prototype.post_option = function(op) {
 	var param = op.body;
@@ -188,14 +215,46 @@ Http.prototype.req = async function(options) {
 			for (var i = 0; i < len; i++) {
 				_this.set_cookie(lt[i]);
 			}
-			options.url = url;
+			options.href = url;
 			op = this.http_options(options);
-			op.referer = options.url;
+			op.referer = options.href;
 			res = await this.request(op);
 		}
 	} else {
 		return res;
 	}
+}
+
+Http.prototype.undata = function(encoding) {
+	var bufarr = [];
+	var errored = false;
+	var zpipe;
+	if (encoding) {
+		zpipe = zlib.createGunzip();
+	} else {
+		zpipe = zlib.createInflate();
+	}
+	zpipe.on('data', function(d) {
+			bufarr.push(d);
+		})
+		.on('end', function() {
+			if (errored) return;
+			errored = true;
+			cb(null, response, enc ? Buffer.concat(bufarr).toString(
+				enc) : Buffer.concat(bufarr));
+		})
+		.on('error', function(err) {
+			if (errored) return;
+			errored = true;
+			cb(err, response, null);
+		});
+	response.pipe(zpipe);
+	response
+		.on('error', function(err) {
+			if (errored) return;
+			errored = true;
+			cb(err, response, null);
+		});
 }
 
 /**
@@ -210,30 +269,33 @@ Http.prototype.request = function(options) {
 		var body = '';
 		var req = hp.request(options, (res) => {
 			if (res.statusCode == 200) {
-				var { headers } = res;
-				var buffer = '';
+				var {
+					headers
+				} = res;
+				var chunks = [];
 				var encoding = headers['content-encoding'];
 				if (encoding) {
-					res.setEncoding('utf-8');
+					// res.setEncoding('utf-8');
 				} else {
 					res.setEncoding("binary");
 				}
 				res.on('data', function(d) {
-					buffer += d;
+					chunks.push(d);
 				}).on('end', function(d) {
+					var buffer = Buffer.concat(chunks);
 					switch (encoding) {
 						case 'br':
 						case 'gzip':
 						case 'deflate':
-							body = unzipSync(buffer);
+							body = unzipSync(buffer).toString();
 							break;
 						default:
-							body = buffer;
+							body = buffer.toString();
 							break;
 					}
 					var mh = body.match(/charset=(gb2312|GBK)"/i);
 					if (mh) {
-						body = iconv.decode(buffer, 'GBK');
+						body = iconv.decode(body, 'GBK');
 					}
 					var lt = headers['set-cookie'];
 					if (lt) {
@@ -283,7 +345,7 @@ Http.prototype.request = function(options) {
 Http.prototype.get = async function(url, headers, cookie) {
 	return await this.req({
 		method: "GET",
-		url,
+		href: url,
 		headers,
 		cookie
 	});
@@ -302,7 +364,7 @@ Http.prototype.get = async function(url, headers, cookie) {
 Http.prototype.post = async function(url, body, headers, type, cookie) {
 	return await this.req({
 		method: "POST",
-		url,
+		href: url,
 		body,
 		type,
 		headers,
