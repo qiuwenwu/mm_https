@@ -274,11 +274,6 @@ Http.prototype.request = function(options) {
 				} = res;
 				var chunks = [];
 				var encoding = headers['content-encoding'];
-				if (encoding) {
-					// res.setEncoding('utf-8');
-				} else {
-					res.setEncoding("binary");
-				}
 				res.on('data', function(d) {
 					chunks.push(d);
 				}).on('end', function(d) {
@@ -307,7 +302,8 @@ Http.prototype.request = function(options) {
 					resolve({
 						status: 200,
 						headers,
-						body: body
+						buffer,
+						body
 					});
 				});
 			} else {
@@ -404,7 +400,7 @@ Http.prototype.download = async function(url, filename, auto, headers, cookie) {
 			file = filename;
 		}
 		if (file) {
-			var length = await fs.writeFileSync(file, res.body, "binary");
+			var length = await fs.writeFileSync(file, res.buffer, "binary");
 			if (length == 0) {
 				file = null;
 			}

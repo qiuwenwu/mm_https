@@ -94,19 +94,30 @@ var fs = require("fs");
 // 	// console.log('结果:', hp.cookies);
 // }
 
+// async function test() {
+// 	var hp = new Http();
+// 	hp.config.headers.Accept = "application/javascript; charset=UTF-8";
+// 	var url =
+// 		"http://69.push2.eastmoney.com/api/qt/clist/get?cb=jQuery1124007023275733383882_1586573202818&pn=1&pz=100000&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:1+t:23&fields=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f22,f11,f62,f128,f136,f115,f152";
+// 	var res = await hp.get(url);
+// 	console.log(res);
+// }
+
+
 async function test() {
 	var hp = new Http();
 	hp.config.headers.Accept = "application/javascript; charset=UTF-8";
-	var url =
-		"http://69.push2.eastmoney.com/api/qt/clist/get?cb=jQuery1124007023275733383882_1586573202818&pn=1&pz=100000&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:13,m:0+t:80,m:1+t:2,m:1+t:23&fields=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f22,f11,f62,f128,f136,f115,f152";
+	var url ="http://localhost:8001/api/wallet/count";
 	var res = await hp.get(url);
+	console.log(res);
 }
 
 // async function test() {
+// 	console.log("测试")
 // 	var hp = new Http();
-// 	var res = await hp.get('http://localhost:8080/dev/img/logo_gray.png');
+// 	var res = await hp.get('https://www.baidu.com/img/flexible/logo/pc/result.png');
 // 	console.log(res);
-// 	fs.writeFile("./logonew.png", res.body, "binary", function(err) {
+// 	fs.writeFile("./logonew.png", res.buffer, "binary", function(err) {
 // 		if (err) {
 // 			console.log("下载失败");
 // 		}
