@@ -1,7 +1,13 @@
 // const nJwt = require('njwt');
-var http = require('http');
 var Http = require('./index.js');
 var fs = require("fs");
+
+async function test(){
+	var http = new Http();
+	var res = await http.get("https://www.baidu.com/");
+	// var res = await http.get("https://1689622.com/view/jisusaiche/pk10kai.html");
+	console.log("html", res);
+}
 
 // async function test3() {
 // 	// 将「微信对话开放平台」得到的信息填入
@@ -24,7 +30,6 @@ var fs = require("fs");
 // 	console.log(res.message, res.body)
 // }
 // test3();
-
 
 // async function test2(content, from_user) {.
 // 图灵机器人
@@ -104,13 +109,13 @@ var fs = require("fs");
 // }
 
 
-async function test() {
-	var hp = new Http();
-	hp.config.headers.Accept = "application/javascript; charset=UTF-8";
-	var url ="http://localhost:8001/api/wallet/count";
-	var res = await hp.get(url);
-	console.log(res);
-}
+// async function test() {
+// 	var hp = new Http();
+// 	hp.config.headers.Accept = "application/javascript; charset=UTF-8";
+// 	var url ="http://localhost:8001/api/wallet/count";
+// 	var res = await hp.get(url);
+// 	console.log(res);
+// }
 
 // async function test() {
 // 	console.log("测试")

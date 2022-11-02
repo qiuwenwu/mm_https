@@ -38,7 +38,7 @@ class Http {
 				// 'sec-fetch-mode': 'navigate',
 				// 'sec-fetch-site': 'none',
 				// 'sec-fetch-user': '?1',
-				'Upgrade-Insecure-Requests': '1',
+				// 'Upgrade-Insecure-Requests': '1',
 				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
 			},
 			rejectUnauthorized: false,
@@ -103,7 +103,9 @@ Http.prototype.http_options = function(options) {
 	if (cookie) {
 		this.set_cookie(cookie);
 	}
+	var host_protocol = href.left(":/") || 'http';
 	return Object.assign({}, {
+		host_protocol,
 		body,
 		type,
 		method: method || "GET",
@@ -207,13 +209,13 @@ Http.prototype.req = async function(options) {
 		this.post_option(op);
 	}
 	var res = await this.request(op);
-	if (res.statusCode == 302) {
-		var url = headers.location;
-		var lt = headers['set-cookie'];
+	if (res.status.code == 302) {
+		var url = res.headers.location;
+		var lt = res.headers['set-cookie'];
 		if (lt) {
 			var len = lt.length;
 			for (var i = 0; i < len; i++) {
-				_this.set_cookie(lt[i]);
+				this.set_cookie(lt[i]);
 			}
 			options.href = url;
 			op = this.http_options(options);
@@ -262,21 +264,20 @@ Http.prototype.undata = function(encoding) {
  * @param {Object} options 配置
  */
 Http.prototype.request = function(options) {
-	var hp = options.protocol === "https" ? https : http;
-	delete options.protocol;
+	var hp = options.host_protocol === "https" ? https : http;
 	var _this = this;
 	return new Promise(function(resolve, reject) {
 		var body = '';
 		var req = hp.request(options, (res) => {
+			var {
+				headers
+			} = res;
 			if (res.statusCode == 200) {
-				var {
-					headers
-				} = res;
 				var chunks = [];
 				var encoding = headers['content-encoding'];
 				res.on('data', function(d) {
 					chunks.push(d);
-				}).on('end', function(d) {
+				}).on('end', function(de) {
 					var buffer = Buffer.concat(chunks);
 					switch (encoding) {
 						case 'br':
@@ -308,6 +309,7 @@ Http.prototype.request = function(options) {
 				});
 			} else {
 				resolve({
+					headers,
 					status: {
 						code: res.statusCode,
 						message: res.statusMessage
