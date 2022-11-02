@@ -5,7 +5,6 @@ var fs = require("fs");
 async function test(){
 	var http = new Http();
 	var res = await http.get("https://www.baidu.com/");
-	// var res = await http.get("https://1689622.com/view/jisusaiche/pk10kai.html");
 	console.log("html", res);
 }
 
