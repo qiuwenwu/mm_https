@@ -2,11 +2,11 @@
 var Http = require('./index.js');
 var fs = require("fs");
 
-async function test(){
-	var http = new Http();
-	var res = await http.get("https://www.baidu.com/");
-	console.log("html", res);
-}
+// async function test(){
+// 	var http = new Http();
+// 	var res = await http.get("https://www.baidu.com/");
+// 	console.log("html", res);
+// }
 
 // async function test3() {
 // 	// 将「微信对话开放平台」得到的信息填入
@@ -142,10 +142,9 @@ async function test(){
 
 // async function download(){
 // 	var hp = new Http();
-// 	// var url = "http://www.haoduoma.com/d/file/p/2021-06-18/76df67e451ca9dec9991588ad7fda6e6.jpg";
 // 	var url = "https://www.copipi.com/p/224/224/becce1fc21d723614b598f5377d5d676.jpg";
 // 	"./二维码/中文".addDir();
-// 	var filename = "./二维码/你好.jpg".fullname();
+// 	var filename = "./二维码/qrcode.jpg".fullname();
 // 	var file = await hp.download(url, filename);
 // 	console.log(file);
 // }
@@ -205,4 +204,4 @@ async function test(){
 // 	// console.log("结果", res.body);
 // }
 
-test();
+// test();

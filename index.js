@@ -30,7 +30,7 @@ class Http {
 				'Accept-Language': 'zh-CN,zh;q=0.9',
 				'Cache-Control': 'no-cache',
 				'Connection': 'keep-alive',
-				'Pragma': 'no-cache',
+				// 'Pragma': 'no-cache',
 				// 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
 				// 'sec-ch-ua-mobile': '?0',
 				// 'sec-ch-ua-platform': '"Windows"',
@@ -272,9 +272,11 @@ Http.prototype.request = function(options) {
 			var {
 				headers
 			} = res;
+			
 			if (res.statusCode == 200) {
 				var chunks = [];
 				var encoding = headers['content-encoding'];
+				
 				res.on('data', function(d) {
 					chunks.push(d);
 				}).on('end', function(de) {
@@ -283,7 +285,8 @@ Http.prototype.request = function(options) {
 						case 'br':
 						case 'gzip':
 						case 'deflate':
-							body = unzipSync(buffer).toString();
+							buffer = unzipSync(buffer);
+							body = buffer.toString();
 							break;
 						default:
 							body = buffer.toString();
@@ -320,6 +323,7 @@ Http.prototype.request = function(options) {
 		});
 
 		req.on("error", function(err) {
+			console.log("错误", err);
 			resolve({
 				status: 0,
 				message: err.message
