@@ -23,24 +23,7 @@ const {
 class Http {
 	constructor(config) {
 		this.config = Object.assign({
-			headers: {
-				'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-				// 'accept-encoding': 'gzip, deflate, br',
-				'Accept-Encoding': 'gzip, deflate',
-				'Accept-Language': 'zh-CN,zh;q=0.9',
-				'Cache-Control': 'no-cache',
-				'Connection': 'keep-alive',
-				// 'Pragma': 'no-cache',
-				// 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
-				// 'sec-ch-ua-mobile': '?0',
-				// 'sec-ch-ua-platform': '"Windows"',
-				// 'sec-fetch-dest': 'document',
-				// 'sec-fetch-mode': 'navigate',
-				// 'sec-fetch-site': 'none',
-				// 'sec-fetch-user': '?1',
-				// 'Upgrade-Insecure-Requests': '1',
-				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
-			},
+			headers: "",
 			rejectUnauthorized: false,
 			cookie: "",
 			proxy: null
@@ -48,10 +31,29 @@ class Http {
 		}, config);
 
 		/**
-		 * cookie缓存
+		 * cookies 缓存
 		 */
-		this.cookies = {
+		this.cookies = {};
 
+		/**
+		 * headers 协议头
+		 */
+		this.headers = {
+			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+			'Accept-Encoding': 'gzip, deflate',
+			'Accept-Language': 'zh-CN,zh;q=0.9',
+			'Cache-Control': 'no-cache',
+			'Connection': 'keep-alive',
+			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
+		};
+
+		if (this.config.cookie) {
+			this.set_cookie(this.config.cookie);
+		}
+		
+		if (this.config.headers) {
+			var headers = this.change_headers(config.headers);
+			Object.assign(this.headers, headers);
 		}
 	}
 }
@@ -79,13 +81,40 @@ Http.prototype.get_cookie = function() {
 	return cookie
 }
 
+/**
+ * 转换协议头
+ * @param {Object|String} headers 协议头
+ */
+Http.prototype.change_headers = function(headers) {
+	if (headers) {
+		if (typeof(headers) == "string") {
+			if (headers.indexOf("{") === 0) {
+				return headers.toJson();
+			} else {
+				var dict = {};
+				var lines = headers.split('\n');
+				for (var i = 0; i < lines.length; i++) {
+					var line = lines[i].trim();
+					if (line) {
+						dict[line.left(":").trim()] = line.right(":").trim();
+					}
+				}
+				return dict;
+			}
+		} else {
+			return headers;
+		}
+	}
+	return {}
+}
+
 Http.prototype.options = function(options) {
 	return {
 		href: "",
 		method: "GET",
 		body: {},
 		proxy: "http://127.0.0.1:10809",
-		headers: Object.assign({}, this.config.headers)
+		headers: Object.assign({}, this.headers)
 	}
 }
 
@@ -109,7 +138,7 @@ Http.prototype.http_options = function(options) {
 		body,
 		type,
 		method: method || "GET",
-		headers: headers ? Object.assign({}, cg.headers, headers) : Object.assign({}, cg.headers),
+		headers: headers ? Object.assign({}, this.headers, headers) : Object.assign({}, this.headers),
 		agent: cg.proxy ? new HttpProxyAgent(cg.proxy) : null,
 		cookie: this.get_cookie()
 	}, u);
@@ -272,11 +301,11 @@ Http.prototype.request = function(options) {
 			var {
 				headers
 			} = res;
-			
+
 			if (res.statusCode == 200) {
 				var chunks = [];
 				var encoding = headers['content-encoding'];
-				
+
 				res.on('data', function(d) {
 					chunks.push(d);
 				}).on('end', function(de) {
@@ -341,7 +370,7 @@ Http.prototype.request = function(options) {
  * @description GET请求
  * @param {String} url 请求地址
  * @param {Object} headers 请求头
- * @param {Object} cookie 服务缓存
+ * @param {String} cookie 服务缓存
  * @return {Object} 响应的结果
  */
 Http.prototype.get = async function(url, headers, cookie) {
@@ -359,8 +388,8 @@ Http.prototype.get = async function(url, headers, cookie) {
  * @param {String} url 请求地址
  * @param {Object} body 提交参
  * @param {Object} headers 请求头
- * @param {Number} type 传参方式 json, form, text
- * @param {Object} cookie 服务缓存
+ * @param {String} type 传参方式 json, form, text
+ * @param {String} cookie 服务缓存
  * @return {Object} 响应的结果
  */
 Http.prototype.post = async function(url, body, headers, type, cookie) {
@@ -380,7 +409,7 @@ Http.prototype.post = async function(url, body, headers, type, cookie) {
  * @param {String} filename 下载地址
  * @param {String} auto 自动类型
  * @param {Object} headers 协议头
- * @param {Object} cookie COOKIE
+ * @param {String} cookie 服务缓存
  * @return {String} 成功返回保存路径，失败返回null
  */
 Http.prototype.download = async function(url, filename, auto, headers, cookie) {

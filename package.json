@@ -1,6 +1,6 @@
 {
     "name": "mm_https",
-    "version": "1.5.6",
+    "version": "1.5.8",
     "description": "这是超级美眉http请求帮助类模块，可自动补充cookie，实现模拟登录，通讯",
     "main": "index.js",
     "scripts": {
@@ -32,7 +32,7 @@
     "homepage": "https://github.com/qiuwenwu/mm_https#readme",
     "dependencies": {
         "https-proxy-agent": "^5.0.1",
-        "iconv-lite": "^0.5.0",
-        "mm_expand": "^1.4.7"
+        "iconv-lite": "^0.5.2",
+        "mm_expand": "^1.5.6"
     }
 }

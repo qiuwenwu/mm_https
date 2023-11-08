@@ -140,15 +140,22 @@ var fs = require("fs");
 // test();
 
 
-// async function download(){
-// 	var hp = new Http();
-// 	var url = "https://www.copipi.com/p/224/224/becce1fc21d723614b598f5377d5d676.jpg";
-// 	"./二维码/中文".addDir();
-// 	var filename = "./二维码/qrcode.jpg".fullname();
-// 	var file = await hp.download(url, filename);
-// 	console.log(file);
-// }
-// download();
+async function download(){
+	var hp = new Http({
+		headers: `
+		Referer: https://www.aieliantong.com/admin/index
+		X-Auth-Token: xxx
+		`,
+		cookie: "Hm_lvt_c73f94a74e41202e67d251e6e3f591cb=1697871513; Hm_lpvt_c73f94a74e41202e67d251e6e3f591cb=1698886851; mm:uuid=3QSuThREzVFdRW6/YrT0o0WpriBhXhMdnLmhtJOXwBg="
+	});
+	console.log(hp.headers, hp.cookies);
+	var url = "https://www.copipi.com/p/224/224/becce1fc21d723614b598f5377d5d676.jpg";
+	"./二维码/中文".addDir();
+	var filename = "./二维码/qrcode.jpg".fullname();
+	var file = await hp.download(url, filename);
+	console.log(file);
+}
+download();
 
 // async function test() {
 // 	var http = new Http();
